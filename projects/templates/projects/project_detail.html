@@ -1,0 +1,15 @@
+{% extends "base_generic.html" %}
+
+{% block content %}
+  <h2>{{ project.name }}</h2>
+  <p>{{ project.description }}</p>
+  <a href="{% url 'project_edit' project.id %}">Edit Project</a>
+  <a href="{% url 'project_delete' project.id %}">Delete Project</a>
+  <h3>Tasks</h3>
+  <a href="{% url 'task_create' project.id %}">Add New Task</a>
+  <ul>
+    {% for task in tasks %}
+      <li>{{ task.title }} - {{ task.status }} <a href="{% url 'task_edit' project.id task.id %}">Edit</a> <a href="{% url 'task_delete' project.id task.id %}">Delete</a></li>
+    {% endfor %}
+  </ul>
+{% endblock %}
