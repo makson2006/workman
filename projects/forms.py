@@ -3,10 +3,10 @@ from django import forms
 
 class ProjectForm(forms.ModelForm):
     class Meta:
-        models = Project
+        model = Project
         fields = ['name','description']
 
 class TaskForm(forms.ModelForm):
-    class Mets:
-        models = Task
+    class Meta:
+        model = Task
         fields = ['project', 'title', 'description', 'assignee', 'status']
