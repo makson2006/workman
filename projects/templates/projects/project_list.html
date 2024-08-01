@@ -1,15 +1,28 @@
 {% extends "base_generic.html" %}
 
-{% block title %}My Projects{% endblock %}
+{% block title %}Projects{% endblock %}
 
 {% block content %}
-  <h2>My Projects</h2>
+  <h2>Your Projects</h2>
   <ul>
-    {% for project in projects %}
+    {% for project in owned_projects %}
       <li><a href="{% url 'project_detail' project.id %}">{{ project.name }}</a></li>
     {% empty %}
-      <li>No projects yet.</li>
+      <li>No projects available.</li>
     {% endfor %}
   </ul>
-  <a href="{% url 'project_create' %}">Create New Project</a>
+
+  <h2>Participated Projects</h2>
+  <ul>
+    {% for project in participated_projects %}
+      <li><a href="{% url 'project_detail' project.id %}">{{ project.name }}</a></li>
+    {% empty %}
+      <li>No projects available.</li>
+    {% endfor %}
+  </ul>
+
+  <!-- Додати кнопку для створення нового проекту -->
+  <a href="{% url 'project_create' %}">
+    <button type="button">Create New Project</button>
+  </a>
 {% endblock %}

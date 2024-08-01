@@ -16,9 +16,15 @@ class ProjectForm(forms.ModelForm):
         return email
 
 class TaskForm(forms.ModelForm):
+    assignee = forms.ModelChoiceField(
+        queryset=User.objects.none(),
+        required=False,
+        help_text='Select a user to assign to this task'
+    )
+
     class Meta:
         model = Task
-        fields = ['title', 'description', 'status', 'assignee']
+        fields = ['title', 'description', 'assignee', 'status']
 
     def __init__(self, *args, **kwargs):
         project = kwargs.pop('project', None)

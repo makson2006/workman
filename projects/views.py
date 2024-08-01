@@ -5,17 +5,23 @@ from .forms import ProjectForm, TaskForm
 from django.contrib.auth.models import User
 from django.contrib import messages
 
+
 @login_required
 def project_list(request):
-    projects = Project.objects.filter(owner=request.user)
-    return render(request, 'projects/project_list.html', {'projects': projects})
+    user = request.user
+    owned_projects = Project.objects.filter(owner=user)
+    participated_projects = Project.objects.filter(users=user).exclude(owner=user)
+    return render(request, 'projects/project_list.html', {
+        'owned_projects': owned_projects,
+        'participated_projects': participated_projects
+    })
 
 
 @login_required
 def project_detail(request, project_id):
-    project = get_object_or_404(Project, id=project_id, owner=request.user)
-    tasks = project.tasks.all()
-    return render(request, 'projects/project_detail.html', {'project': project, 'tasks': tasks})
+    project = get_object_or_404(Project, id=project_id)
+    is_owner = project.owner == request.user
+    return render(request, 'projects/project_detail.html', {'project': project, 'is_owner': is_owner})
 
 @login_required
 def project_create(request):
@@ -55,7 +61,7 @@ def project_edit(request, project_id):
                 except User.DoesNotExist:
                     messages.error(request, f"Користувач з email {user_email} не знайдений.")
             form.save()
-            return redirect('project_edit', project_id=project.id)  # Змінено тут
+            return redirect('project_edit', project_id=project.id)
     else:
         form = ProjectForm(instance=project)
     return render(request, 'projects/project_form.html', {'form': form, 'project': project})
@@ -69,19 +75,30 @@ def project_delete(request, project_id):
     return render(request,'projects/project_confirm_delete.html',{'project':project})
 
 
+@login_required
 def task_create(request, project_id):
     project = get_object_or_404(Project, id=project_id)
+
+    if project.owner != request.user:
+        messages.error(request, "У вас немає доступу до цього проекту.")
+        return redirect('project_list')
+
     if request.method == 'POST':
         form = TaskForm(request.POST, project=project)
         if form.is_valid():
             task = form.save(commit=False)
             task.project = project
-            task.save()
-            return redirect('project_detail', project_id=project_id)
+
+            if task.assignee not in project.users.all():
+                form.add_error('assignee', 'Добавте користувача')
+            else:
+                task.save()
+                messages.success(request, "Завдання успішно створено.")
+                return redirect('project_detail', project_id=project.id)
     else:
         form = TaskForm(project=project)
-    return render(request, 'projects/task_form.html', {'form': form, 'project': project})
 
+    return render(request, 'projects/task_form.html', {'form': form, 'project': project})
 
 @login_required
 def task_edit(request, project_id, task_id):

@@ -11,25 +11,26 @@
     <button type="submit">Зберегти</button>
   </form>
 
-  <!-- Відображення повідомлень -->
-  {% if messages %}
-    <ul class="messages">
-      {% for message in messages %}
-        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-      {% endfor %}
-    </ul>
-  {% endif %}
-
-  <h3>Учасники проекту</h3>
-  <ul>
-    {% for user in project.users.all %}
-      <li>{{ user.email }}</li>
+<!-- Відображення повідомлень -->
+{% if messages %}
+  <ul class="messages">
+    {% for message in messages %}
+      <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
     {% endfor %}
   </ul>
+{% endif %}
 
-  <!-- Додати кнопку для переходу до сторінки проекту -->
-  <form action="{% url 'project_detail' project.id %}" method="get">
-    <button type="submit">Перейти до сторінки проекту</button>
-  </form>
+  {% if project %}
+    <h3>Учасники проекту</h3>
+    <ul>
+      {% for user in project.users.all %}
+        <li>{{ user.email }}</li>
+      {% endfor %}
+    </ul>
 
+    <!-- Додати кнопку для переходу до сторінки проекту -->
+    <form action="{% url 'project_detail' project.id %}" method="get">
+      <button type="submit">Перейти до сторінки проекту</button>
+    </form>
+  {% endif %}
 {% endblock %}
