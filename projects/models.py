@@ -13,9 +13,9 @@ class Project(models.Model):
 class Task(models.Model):
     project = models.ForeignKey(Project,on_delete=models.CASCADE, related_name='tasks')
     title = models.CharField(max_length=100)
-    description = models.TextField()
+    description = models.TextField(blank=True)
     assignee = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='tasks')
-    status = models.CharField(max_length=20, choices=[('todo','To Do'),('in_progress','In Progress'),('done','Done')])
+    status = models.CharField(max_length=20, choices=[('To do','To Do'),('In progress','In Progress'),('Done','Done')])
 
 
 class Comment(models.Model):

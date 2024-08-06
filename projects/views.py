@@ -5,7 +5,7 @@ from .forms import ProjectForm, TaskForm
 from django.contrib.auth.models import User
 from django.contrib import messages
 
-
+#-------------------PROJECT DEFS-------------------#
 @login_required
 def project_list(request):
     user = request.user
@@ -76,6 +76,22 @@ def project_delete(request, project_id):
 
 
 @login_required
+def project_remove_user(request, project_id, user_id):
+    project = get_object_or_404(Project, id=project_id, owner=request.user)
+    user = get_object_or_404(User, id=user_id)
+
+    if request.method == 'POST':
+        if user != project.owner:
+            project.users.remove(user)
+            messages.success(request, f"Користувача {user.username} успішно видалено з проекту.")
+        else:
+            messages.error(request, "Ви не можете видалити власника проекту.")
+        return redirect('project_detail', project_id=project.id)
+
+    return render(request, 'projects/project_confirm_remove_user.html', {'project': project, 'user': user})
+
+#---------------TASK DEFS------------------#
+@login_required
 def task_create(request, project_id):
     project = get_object_or_404(Project, id=project_id)
 
@@ -89,7 +105,7 @@ def task_create(request, project_id):
             task = form.save(commit=False)
             task.project = project
 
-            if task.assignee not in project.users.all():
+            if task.assignee and task.assignee not in project.users.all():
                 form.add_error('assignee', 'Добавте користувача')
             else:
                 task.save()
@@ -102,19 +118,23 @@ def task_create(request, project_id):
 
 @login_required
 def task_edit(request, project_id, task_id):
-    project = get_object_or_404(Project, id=project_id, owner=request.user)
+    project = get_object_or_404(Project, id=project_id)
     task = get_object_or_404(Task, id=task_id, project=project)
 
+    if project.owner != request.user:
+        messages.error(request, "У вас немає доступу до цього проекту.")
+        return redirect('project_list')
+
     if request.method == 'POST':
-        form = TaskForm(request.POST, instance=task)  # Передача екземпляра моделі
+        form = TaskForm(request.POST, instance=task, project=project)
         if form.is_valid():
             form.save()
+            messages.success(request, "Завдання успішно оновлено.")
             return redirect('project_detail', project_id=project.id)
     else:
-        form = TaskForm(instance=task)  # Передача екземпляра моделі
+        form = TaskForm(instance=task, project=project)
 
     return render(request, 'projects/task_form.html', {'form': form, 'project': project})
-
 @login_required
 def task_delete(request,project_id,task_id):
     project = get_object_or_404(Project, id=project_id, owner=request.user)
@@ -123,5 +143,21 @@ def task_delete(request,project_id,task_id):
         task.delete()
         return redirect('project_detail', project_id=project.id)
     return render(request,'projects/task_confirm_delete.html',{'task':task,'project':project})
+
+@login_required
+def change_task_status(request,project_id,task_id):
+    task = get_object_or_404(Task,id=task_id, project__id=project_id)
+
+    if request.method == 'POST':
+        status = request.POST.get('status')
+        if status in ['Todo','In progress','Done']:
+            task.status = status
+            task.save()
+            messages.success(request,'Статус завдання змінено')
+        else:
+            messages.error(request,'Некоректний статус завдання')
+    return redirect('project_detail',project_id=project_id)
+
+
 
 

@@ -1,31 +1,61 @@
 {% extends "base_generic.html" %}
 
-{% block title %}Деталі проекту{% endblock %}
+{% block title %}{{ project.name }}{% endblock %}
 
 {% block content %}
   <h2>{{ project.name }}</h2>
   <p>{{ project.description }}</p>
 
-  {% if user == project.owner %}
-    <a href="{% url 'project_edit' project.id %}">Редагувати проект</a>
-    <a href="{% url 'project_delete' project.id %}">Видалити проект</a>
+  {% if is_owner %}
+    <a href="{% url 'project_edit' project.id %}">Edit Project</a>
+    <a href="{% url 'project_delete' project.id %}">Delete Project</a>
+  {% else %}
+    <p>You are a participant in this project.</p>
   {% endif %}
 
-  <h3>Завдання</h3>
+  <h3>Tasks</h3>
   <ul>
     {% for task in project.tasks.all %}
-      {% if task.assignee == user or user == project.owner %}
-        <li>{{ task.title }} - {{ task.status }}
-          {% if user == project.owner %}
-            <a href="{% url 'task_edit' project.id task.id %}">Редагувати</a>
-            <a href="{% url 'task_delete' project.id task.id %}">Видалити</a>
-          {% endif %}
-        </li>
-      {% endif %}
+      <li>
+        {{ task.title }} - {{ task.status }}
+
+        {% if task.assignee == request.user %}
+          <!-- Форма для зміни статусу завдання для користувача -->
+          <form action="{% url 'change_task_status' project.id task.id %}" method="post">
+            {% csrf_token %}
+            <select name="status">
+              <option value="Todo" {% if task.status == 'Todo' %}selected{% endif %}>Todo</option>
+              <option value="In progress" {% if task.status == 'In progress' %}selected{% endif %}>In progress</option>
+              <option value="Done" {% if task.status == 'Done' %}selected{% endif %}>Done</option>
+            </select>
+            <button type="submit">Change Status</button>
+          </form>
+        {% endif %}
+
+        {% if is_owner %}
+          <!-- Власник бачить статус і може редагувати та видаляти завдання -->
+          (assigned to: {{ task.assignee.username }})
+          <a href="{% url 'task_edit' project.id task.id %}">Edit</a>
+          <a href="{% url 'task_delete' project.id task.id %}">Delete</a>
+        {% endif %}
+      </li>
+    <br/><br/>
     {% endfor %}
+
   </ul>
 
-  {% if user == project.owner %}
-    <a href="{% url 'task_create' project.id %}">Додати нове завдання</a>
+  {% if is_owner %}
+    <a href="{% url 'task_create' project.id %}">Add New Task</a>
   {% endif %}
+
+  <h3>Participants</h3>
+  <ul>
+    {% for user in project.users.all %}
+      <li>{{ user.username }}
+        {% if is_owner and user != project.owner %}
+          <a href="{% url 'project_remove_user' project.id user.id %}">Remove</a>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
 {% endblock %}
